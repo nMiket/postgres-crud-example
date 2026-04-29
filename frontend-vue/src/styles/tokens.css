@@ -1,0 +1,15 @@
+@theme {
+  /* Colors */
+  --color-primary: #ff9a3c;
+  --color-secondary: #e06c2f;
+  --color-accent: #ffe600;
+  --color-text: #f5e9dc;
+  --color-muted: #c9b7a5;
+  --color-surface: #1b120e;
+  --color-background: #0f0a08;
+
+  /* Typography */
+  --font-display: 'Pixelify Sans', monospace;
+  --font-sans: 'IBM Plex Sans', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+}

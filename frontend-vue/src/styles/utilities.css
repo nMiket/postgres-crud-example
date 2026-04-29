@@ -1,0 +1,13 @@
+@layer utilities {
+  .link {
+    @apply hover:text-secondary transition-colors;
+  }
+
+  .btn-primary {
+    @apply border border-primary px-4 py-1.5 rounded font-display text-primary hover:bg-primary hover:text-background transition-all;
+  }
+
+  .btn-secondary {
+    @apply border border-transparent px-4 py-1.5 rounded font-display text-muted hover:border-muted hover:text-text transition-all;
+  }
+}
