@@ -1,17 +1,21 @@
-// API client for future backend integration (.NET or FastAPI)
-// This will be updated when backend is ready
-
 interface APIConfig {
   baseUrl: string
 }
 
 const config: APIConfig = {
-  baseUrl: import.meta.env.VITE_API_URL || 'http://localhost:3000/api',
+  baseUrl: import.meta.env.VITE_API_URL || 'http://localhost:8000/api',
+}
+
+export function buildApiUrl(path: string) {
+  const normalizedBaseUrl = config.baseUrl.replace(/\/$/, '')
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`
+
+  return `${normalizedBaseUrl}${normalizedPath}`
 }
 
 export const api = {
   config,
-  // Placeholder for future API methods
+  buildApiUrl,
 }
 
 export default api

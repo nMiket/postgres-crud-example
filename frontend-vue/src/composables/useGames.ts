@@ -1,5 +1,7 @@
 import { onMounted, ref } from 'vue'
 
+import { buildApiUrl } from '@/lib/api'
+
 export interface GameRecord {
   id: string
   rawg_id: number | null
@@ -10,37 +12,26 @@ export interface GameRecord {
   rating: number | null
 }
 
-const GAMES_STORAGE_KEY = 'nerdstate_games'
+type GameApiRecord = Partial<GameRecord> & {
+  rawgId?: number | null
+  releaseDate?: string | null
+  coverUrl?: string | null
+  rating?: number | null
+}
 
-const MOCK_GAMES: GameRecord[] = [
-  {
-    id: '1',
-    rawg_id: 1,
-    title: 'Elden Ring',
-    slug: 'elden-ring',
-    release_date: '2022-02-25',
-    cover_url: 'https://media.rawg.io/media/games/8f8/8f82c19662b3e8e72e0487e7bc5afeaf.jpg',
-    rating: 4.5,
-  },
-  {
-    id: '2',
-    rawg_id: 2,
-    title: "Baldur's Gate 3",
-    slug: 'baldurs-gate-3',
-    release_date: '2023-08-03',
-    cover_url: 'https://media.rawg.io/media/games/b7d/b7d8786585f5a7b58e6b2a7e3f3f3f3f.jpg',
-    rating: 4.7,
-  },
-  {
-    id: '3',
-    rawg_id: 3,
-    title: 'The Witcher 3',
-    slug: 'the-witcher-3',
-    release_date: '2015-05-19',
-    cover_url: 'https://media.rawg.io/media/games/21c/21cc0d4d6d00b0984bcef621b0d8bf5e.jpg',
-    rating: 4.6,
-  },
-]
+function normalizeGame(record: GameApiRecord): GameRecord {
+  const id = record.id ?? ''
+
+  return {
+    id,
+    rawg_id: record.rawg_id ?? record.rawgId ?? null,
+    title: record.title ?? null,
+    slug: record.slug ?? null,
+    release_date: record.release_date ?? record.releaseDate ?? null,
+    cover_url: record.cover_url ?? record.coverUrl ?? null,
+    rating: record.rating ?? null,
+  }
+}
 
 export function useGames() {
   const games = ref<GameRecord[]>([])
@@ -53,17 +44,18 @@ export function useGames() {
     error.value = null
 
     try {
-      const stored = localStorage.getItem(GAMES_STORAGE_KEY)
-      if (stored) {
-        games.value = JSON.parse(stored) as GameRecord[]
-      } else {
-        games.value = MOCK_GAMES
-        localStorage.setItem(GAMES_STORAGE_KEY, JSON.stringify(MOCK_GAMES))
+      const response = await fetch(buildApiUrl('/games'))
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`)
       }
+
+      const payload = (await response.json()) as GameApiRecord[]
+      games.value = Array.isArray(payload) ? payload.map(normalizeGame) : []
       selectedGame.value = null
     } catch (fetchError) {
       error.value = fetchError instanceof Error ? fetchError.message : 'Unknown error'
-      games.value = MOCK_GAMES
+      games.value = []
       selectedGame.value = null
     } finally {
       loading.value = false

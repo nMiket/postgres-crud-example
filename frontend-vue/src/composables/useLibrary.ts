@@ -1,5 +1,7 @@
 import { onMounted, ref } from 'vue'
 
+import { buildApiUrl } from '@/lib/api'
+
 interface GameSummary {
   id: string
   rawg_id: number | null
@@ -32,7 +34,39 @@ export interface UpdateLibraryEntryInput {
   completedAt: string | null
 }
 
-const STORAGE_KEY = 'nerdstate_library'
+type LibraryEntryApi = Omit<LibraryEntry, 'game'> & {
+  game?: GameSummary
+  game_id?: string
+  gameId?: string
+}
+
+const LIBRARY_ENDPOINT = '/library'
+
+function normalizeLibraryEntry(entry: LibraryEntryApi): LibraryEntry {
+  const gameId = entry.game_id ?? entry.gameId ?? entry.game?.id ?? ''
+  const game = entry.game ?? {
+    id: gameId,
+    rawg_id: null,
+    title: null,
+    slug: null,
+    release_date: null,
+    cover_url: null,
+    rating: null,
+  }
+
+  return {
+    id: entry.id,
+    gameId,
+    status: entry.status,
+    rating: entry.rating,
+    notes: entry.notes,
+    playCount: entry.playCount,
+    startedAt: entry.startedAt,
+    completedAt: entry.completedAt,
+    createdAt: entry.createdAt,
+    game,
+  }
+}
 
 export function useLibrary() {
   const backlog = ref<LibraryEntry[]>([])
@@ -40,31 +74,19 @@ export function useLibrary() {
   const mutating = ref(false)
   const error = ref<string | null>(null)
 
-  function loadFromStorage() {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY)
-      if (stored) {
-        backlog.value = JSON.parse(stored)
-      }
-    } catch (e) {
-      console.error('Failed to load library from storage', e)
-    }
-  }
-
-  function saveToStorage() {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(backlog.value))
-    } catch (e) {
-      console.error('Failed to save library to storage', e)
-    }
-  }
-
   async function fetchBacklog() {
     loadingBacklog.value = true
     error.value = null
 
     try {
-      loadFromStorage()
+      const response = await fetch(buildApiUrl(LIBRARY_ENDPOINT))
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`)
+      }
+
+      const payload = (await response.json()) as LibraryEntryApi[]
+      backlog.value = Array.isArray(payload) ? payload.map(normalizeLibraryEntry) : []
     } catch (fetchError) {
       error.value = fetchError instanceof Error ? fetchError.message : 'Unknown error'
       backlog.value = []
@@ -78,29 +100,31 @@ export function useLibrary() {
     error.value = null
 
     try {
-      if (!backlog.value.find((entry) => entry.gameId === gameId)) {
-        const newEntry: LibraryEntry = {
-          id: `${Date.now()}-${Math.random()}`,
+      const response = await fetch(buildApiUrl(LIBRARY_ENDPOINT), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           gameId,
+          game_id: gameId,
+          game,
           status: 'wishlist',
           rating: null,
           notes: null,
           playCount: 0,
           startedAt: null,
           completedAt: null,
-          createdAt: new Date().toISOString(),
-          game: game || {
-            id: gameId,
-            rawg_id: null,
-            title: null,
-            slug: null,
-            release_date: null,
-            cover_url: null,
-            rating: null,
-          },
-        }
-        backlog.value.push(newEntry)
-        saveToStorage()
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`)
+      }
+
+      const createdEntry = normalizeLibraryEntry((await response.json()) as LibraryEntryApi)
+      if (!backlog.value.some((entry) => entry.id === createdEntry.id)) {
+        backlog.value = [...backlog.value, createdEntry]
       }
     } catch (upsertError) {
       error.value = upsertError instanceof Error ? upsertError.message : 'Unknown error'
@@ -114,23 +138,22 @@ export function useLibrary() {
     error.value = null
 
     try {
-      const entryIndex = backlog.value.findIndex((entry) => entry.id === entryId)
-      if (entryIndex !== -1) {
-        const currentEntry = backlog.value[entryIndex]!
-        backlog.value[entryIndex] = {
-          id: currentEntry.id,
-          gameId: currentEntry.gameId,
-          game: currentEntry.game,
-          createdAt: currentEntry.createdAt,
-          status: input.status,
-          rating: input.rating,
-          notes: input.notes,
-          playCount: input.playCount,
-          startedAt: input.startedAt,
-          completedAt: input.completedAt,
-        }
-        saveToStorage()
+      const response = await fetch(buildApiUrl(`${LIBRARY_ENDPOINT}/${entryId}`), {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(input),
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`)
       }
+
+      const updatedEntry = normalizeLibraryEntry((await response.json()) as LibraryEntryApi)
+      backlog.value = backlog.value.map((entry) =>
+        entry.id === updatedEntry.id ? updatedEntry : entry,
+      )
     } catch (updateError) {
       error.value = updateError instanceof Error ? updateError.message : 'Unknown error'
     } finally {
@@ -143,8 +166,15 @@ export function useLibrary() {
     error.value = null
 
     try {
+      const response = await fetch(buildApiUrl(`${LIBRARY_ENDPOINT}/${entryId}`), {
+        method: 'DELETE',
+      })
+
+      if (!response.ok && response.status !== 204) {
+        throw new Error(`HTTP ${response.status}`)
+      }
+
       backlog.value = backlog.value.filter((entry) => entry.id !== entryId)
-      saveToStorage()
     } catch (deleteError) {
       error.value = deleteError instanceof Error ? deleteError.message : 'Unknown error'
     } finally {
