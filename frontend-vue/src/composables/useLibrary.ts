@@ -38,6 +38,16 @@ type LibraryEntryApi = Omit<LibraryEntry, 'game'> & {
   game?: GameSummary
   game_id?: string
   gameId?: string
+  status?: LibraryEntry['status']
+  notes?: string | null
+  play_count?: number
+  playCount?: number
+  started_at?: string | null
+  startedAt?: string | null
+  completed_at?: string | null
+  completedAt?: string | null
+  created_at?: string | null
+  createdAt?: string | null
 }
 
 const LIBRARY_ENDPOINT = '/library'
@@ -57,13 +67,13 @@ function normalizeLibraryEntry(entry: LibraryEntryApi): LibraryEntry {
   return {
     id: entry.id,
     gameId,
-    status: entry.status,
+    status: entry.status ?? 'wishlist',
     rating: entry.rating,
-    notes: entry.notes,
-    playCount: entry.playCount,
-    startedAt: entry.startedAt,
-    completedAt: entry.completedAt,
-    createdAt: entry.createdAt,
+    notes: entry.notes ?? null,
+    playCount: entry.play_count ?? entry.playCount ?? 0,
+    startedAt: entry.started_at ?? entry.startedAt ?? null,
+    completedAt: entry.completed_at ?? entry.completedAt ?? null,
+    createdAt: entry.created_at ?? entry.createdAt ?? null,
     game,
   }
 }
