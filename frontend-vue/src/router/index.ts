@@ -8,12 +8,8 @@ const router = createRouter({
       component: () => import('@/layouts/PrivateLayout.vue'),
       children: [
         {
-          path: 'games',
-          component: () => import('@/views/dashboard/GamesView.vue'),
-        },
-        {
-          path: 'library',
-          component: () => import('@/views/dashboard/LibraryView.vue'),
+          path: '',
+          component: () => import('@/views/dashboard/BarbershopView.vue'),
         },
       ],
     },
