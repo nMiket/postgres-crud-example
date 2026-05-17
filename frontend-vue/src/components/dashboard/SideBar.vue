@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { BookMarked, Gamepad2 } from 'lucide-vue-next'
+import { Scissors } from 'lucide-vue-next'
 
 import AppLogo from '@/components/shared/AppLogo.vue'
 import NavItem from './NavItem.vue'
@@ -15,8 +15,7 @@ import NavItem from './NavItem.vue'
     </div>
 
     <nav class="flex flex-1 flex-col gap-1 px-3 py-4">
-      <NavItem href="/games" label="Gallery" :icon="Gamepad2" />
-      <NavItem href="/library" label="Library" :icon="BookMarked" />
+      <NavItem href="/" label="Panel" :icon="Scissors" />
     </nav>
 
     <div class="flex flex-col gap-1 border-t border-primary/20 px-3 pb-8 pt-4"></div>

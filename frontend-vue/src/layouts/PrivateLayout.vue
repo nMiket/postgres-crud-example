@@ -17,7 +17,7 @@ import CrtOverlay from '@/components/shared/CrtOverlay.vue'
       >
         <p class="font-mono text-sm text-muted">
           <span class="text-primary/40 font-display select-none">//</span>
-          Welcome to Nerdstate
+          Panel de gestión de barbería
         </p>
       </header>
 
