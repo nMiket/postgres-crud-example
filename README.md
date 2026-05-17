@@ -58,6 +58,20 @@ postgres-crud-example/
 
 ## Inicio Rápido
 
+## ¿Dónde está la base de datos en esta rama?
+
+En esta rama, la configuración y el esquema de PostgreSQL están en:
+
+- `db/init.sql` — definición de esquema (tablas `games` y `user_games`, índices y extensión `pgcrypto`).
+- `db/games.csv` — datos de ejemplo para carga manual.
+- `docker-compose.yml` — servicio `db` de PostgreSQL, puerto `5432` y montaje de `db/init.sql` para inicialización.
+- `.env.example` (raíz) — variables de entorno del contenedor/URL de conexión (`POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `DATABASE_URL`).
+
+Variables de entorno relacionadas con conexión:
+
+- Base de datos (backend/servicios): se definen en `.env` a partir de `.env.example` y se leen en `docker-compose.yml`.
+- Frontend: `frontend-vue/src/lib/api.ts` lee `VITE_API_URL` (definida en `frontend-vue/.env`) para conectarse a la API; no conecta directo a PostgreSQL.
+
 1. Levantar la base de datos:
 
    ```bash
